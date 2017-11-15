@@ -1,0 +1,7 @@
+[package]
+name = "random-pool"
+version = "0.1.0"
+authors = ["Henry Zimmerman <zimhen7@gmail.com>"]
+
+[dependencies]
+rand = "0.3"
