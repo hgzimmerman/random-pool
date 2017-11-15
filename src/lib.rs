@@ -10,7 +10,7 @@ use std::sync::{Mutex, MutexGuard};
 /// When getting an element, a random element is selected from the pool, locked, and returned.
 /// If a lock for the random element cannot be gotten, the pool will try the next available element.
 #[derive(Clone, Debug)]
-struct RandomPool<T> {
+pub struct RandomPool<T> {
     elements: Vec<Arc<Mutex<T>>>
 }
 
@@ -168,15 +168,15 @@ mod tests{
         let pool_reference_copy_2: Arc<RandomPool<usize>> = pool.clone();
 
         // Thread 1 owns a lock for 1 second
-        let thread_1 = thread::spawn(move || {
-            let locked_value = pool_reference_copy_1.try_get().unwrap();
+        let _thread_1 = thread::spawn(move || {
+            let _locked_value = pool_reference_copy_1.try_get().unwrap();
             let one_sec = time::Duration::from_millis(1_000);
             thread::sleep(one_sec);
         });
 
         // Thread 2 owns a lock for 1 second
-        let thread_2 = thread::spawn(move || {
-            let locked_value = pool_reference_copy_2.try_get().unwrap();
+        let _thread_2 = thread::spawn(move || {
+            let _locked_value = pool_reference_copy_2.try_get().unwrap();
             let one_sec = time::Duration::from_millis(1_000);
             thread::sleep(one_sec);
         });
@@ -197,15 +197,15 @@ mod tests{
 
         let initial_time = time::Instant::now();
         // Thread 1 owns a lock for 1 second
-        let thread_1 = thread::spawn(move || {
-            let locked_value = pool_reference_copy_1.try_get().unwrap();
+        let _thread_1 = thread::spawn(move || {
+            let _locked_value = pool_reference_copy_1.try_get().unwrap();
             let one_sec = time::Duration::from_millis(1_000);
             thread::sleep(one_sec);
         });
 
         // Thread 2 owns a lock for 1 second
-        let thread_2 = thread::spawn(move || {
-            let locked_value = pool_reference_copy_2.try_get().unwrap();
+        let _thread_2 = thread::spawn(move || {
+            let _locked_value = pool_reference_copy_2.try_get().unwrap();
             let one_sec = time::Duration::from_millis(1_000);
             thread::sleep(one_sec);
         });
@@ -215,7 +215,7 @@ mod tests{
         let half_a_sec = time::Duration::from_millis(500);
         thread::sleep(half_a_sec);
 
-        let locked_value = pool.get();
+        let _locked_value = pool.get();
 
         // even though the `get()` is called after half a second, it must spin for another
         // half a second to wait for one of the threads to unlock one of their locks.
