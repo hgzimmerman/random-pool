@@ -189,7 +189,12 @@ mod tests{
         thread::sleep(half_a_sec);
 
         // This will fail, because all elements in the pool are locked
-        assert!(pool.try_get().is_none())
+        assert!(pool.try_get().is_none());
+        // Sleep another a second
+        let one_sec = time::Duration::from_millis(1_000);
+        thread::sleep(one_sec);
+        // The locks will have been unlocked by now and the pool will return an element.
+        assert!(pool.try_get().is_some());
     }
 
     #[test]
