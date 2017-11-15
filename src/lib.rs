@@ -235,8 +235,8 @@ mod tests{
         // This will spinlock
         let _locked_value = pool.get();
 
-        // even though the `get()` is called after half a second, it must spin for another
-        // half a second to wait for one of the threads to unlock one of their locks.
+        // Even though the `get()` is called after half a second, it must spin for another
+        // half a second to wait for one of the threads to release one of their locks.
         // When this happens, the spinlock will gain access to the lock, and this assertion can run.
         assert!(initial_time.elapsed() >= time::Duration::from_millis(1_000))
 
