@@ -156,6 +156,9 @@ mod tests{
 
         // A `let` binding is needed here to increase the lifetime of the value from the pool.
         let value_from_pool = *pool.try_get().unwrap();
+
+        // Because a function setting the counter to 400 was ran on every element in the pool,
+        // the value for any random element is 400.
         assert_eq!(value_from_pool, 400);
 
     }
@@ -195,7 +198,9 @@ mod tests{
         let pool_reference_copy_1: Arc<RandomPool<usize>> = pool.clone();
         let pool_reference_copy_2: Arc<RandomPool<usize>> = pool.clone();
 
+        // Get the time before the threads are spawned
         let initial_time = time::Instant::now();
+
         // Thread 1 owns a lock for 1 second
         let _thread_1 = thread::spawn(move || {
             let _locked_value = pool_reference_copy_1.try_get().unwrap();
@@ -215,6 +220,14 @@ mod tests{
         let half_a_sec = time::Duration::from_millis(500);
         thread::sleep(half_a_sec);
 
+        // This will not spinlock, and instead return immediately.
+        assert!(pool.try_get().is_none());
+        // Because `try_get()` won't spinlock, it can be assumed that this operation will take
+        // less than the remaining 500 ms.
+        assert!(initial_time.elapsed() < time::Duration::from_millis(1_000) );
+
+
+        // This will spinlock
         let _locked_value = pool.get();
 
         // even though the `get()` is called after half a second, it must spin for another
