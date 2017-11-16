@@ -1,12 +1,15 @@
 [package]
 name = "random-pool"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Henry Zimmerman <zimhen7@gmail.com>"]
 
 
 description = "A threadsafe, fixed size, pool, where its contents are individually guarded by Mutexes."
 readme = "README.md"
 
+homepage = "https://github.com/hgzimmerman/random-pool"
+repository = "https://github.com/hgzimmerman/random-pool"
+documentation = "https://docs.rs/crate/random-pool"
 
 license-file = "LICENSE"
 

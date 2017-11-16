@@ -1,7 +1,9 @@
+[![Current Crates.io Version](https://img.shields.io/crates/v/random-pool.svg)](https://crates.io/crates/random-pool)
+
 # Random Pool
 A threadsafe, fixed-size, persistent object pool,
 where its contents are individually guarded by Mutexes 
-and are guaranteed to be accessed in a random order.
+and are guaranteed to be accessed randomly.
 
 # Use Case 
 This crate is useful for situations where you need a fixed number of
