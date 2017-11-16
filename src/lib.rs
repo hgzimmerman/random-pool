@@ -5,10 +5,16 @@ use rand::{thread_rng, Rng};
 use std::sync::Arc;
 use std::sync::{Mutex, MutexGuard};
 
-/// A threadsafe pool that holds elements that are each individually guarded behind a Mutex.
+/// A threadsafe, fixed-size, pool that holds elements that are each individually guarded behind a Mutex.
 ///
 /// When getting an element, a random element is selected from the pool, locked, and returned.
 /// If a lock for the random element cannot be gotten, the pool will try the next available element.
+///
+/// The random nature of the pool makes it particularly useful for pooling mutable resources that are fungible,
+/// like dynamic caches.
+/// If elements are attempted to be inserted into the caches, with a random insertion pattern,
+/// the caches will trend towards having the same contents.
+///
 #[derive(Clone, Debug)]
 pub struct RandomPool<T> {
     elements: Vec<Arc<Mutex<T>>>
@@ -17,13 +23,22 @@ pub struct RandomPool<T> {
 impl<T> RandomPool<T> {
 
     /// Create a new pool.
-    /// You should want the number of entries to correspond to the number of threads that may access the pool.
+    ///
+    /// # Arguments
+    ///
+    /// * `number_of_elements` - Number of Ts that will be in the pool.
+    /// * `element_creation_function` - The function that is used to create each element.
+    /// This will be called the number of times specified by the `number_of_elements` argument.
+    ///
+    /// # Concurrency
+    ///
+    /// You should want the number of elements to correspond to the number of threads that may access the pool.
     /// Any more, and you are wasting space for elements that won't relieve lock contention.
     /// Any less, and try_get() may start to return None, and get() may spinlock, as all elements may be locked at once.
-    pub fn new(number_of_entries: usize, element_creation_function: fn() -> T) -> RandomPool<T> {
+    pub fn new(number_of_elements: usize, element_creation_function: fn() -> T) -> RandomPool<T> {
         let mut elements: Vec<Arc<Mutex<T>>> = vec!();
 
-        for _ in 0..number_of_entries {
+        for _ in 0..number_of_elements {
             elements.push(Arc::new(Mutex::new(element_creation_function())))
         }
         RandomPool {
@@ -35,9 +50,9 @@ impl<T> RandomPool<T> {
     /// Try to get a random element from the pool.
     /// If all elements are locked, this will return `None`.
     ///
-    /// # Warning
+    /// # Concurrency
     ///
-    /// This will not spinlock.
+    /// This will not spinlock if all elements are locked.
     ///
     /// It is possible for this to miss an unlocked element if an element that has been passed over
     /// because it was locked, becomes unlocked after it was checked, but before the method ends.
@@ -62,7 +77,7 @@ impl<T> RandomPool<T> {
     /// If the first element is locked, it will try the next random element.
     /// If all elements are locked, the pool will deadlock until one of the locks frees itself.
     ///
-    /// # Warning
+    /// # Concurrency
     ///
     /// This will spinlock if all locks in the pool are taken.
     pub fn get<'a>(&'a self) -> MutexGuard<'a, T> {
@@ -81,10 +96,20 @@ impl<T> RandomPool<T> {
 
     /// Alter every element in the pool by locking them one at a time.
     ///
-    /// # Warning
+    /// # Arguments
+    ///
+    /// * `function` - The function that will be called on every element in the pool.
+    ///
+    /// # Concurrency
     ///
     /// If a lock for any of the pooled elements is held elsewhere, then this function will block until
     /// a lock for the given element can be owned by this function.
+    /// As a result, this function may take quite a while to complete.
+    ///
+    /// The benefit of this approach, is that it will not effectively lock the whole pool, only one element at a time.
+    /// This should only degrade the max performance of the pool to `(n-1)/n`,
+    /// with `n` being the number of elements in the cache,
+    /// instead of 0 while this function is executed.
     pub fn access_all<'a>(&'a self, function: fn(MutexGuard<'a, T>) ) {
         for e in self.elements.iter() {
             // All entries in the pooled try to lock, one at a time, so that the provided function

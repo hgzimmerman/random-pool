@@ -3,5 +3,13 @@ name = "random-pool"
 version = "0.1.0"
 authors = ["Henry Zimmerman <zimhen7@gmail.com>"]
 
+
+description = "A threadsafe, fixed size, pool, where its contents are individually guarded by Mutexes."
+readme = "README.md"
+
+
+license-file = "LICENSE"
+
+
 [dependencies]
 rand = "0.3"
